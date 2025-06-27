@@ -70,7 +70,7 @@
                         const pubDate = parseItemDate(item.querySelector("pubDate")?.textContent || "");
                         return { item, pubDate };
                     })
-                    .filter(entry => entry.pubDate >= startOfWeek && !entry.link.includes("/shorts/"))
+                    .filter(entry => entry.pubDate >= startOfWeek && entry.link && !entry.link.includes("/shorts/"))
                     .sort((a, b) => b.pubDate - a.pubDate); // 新しい順
 
                 for (const { item, pubDate } of sortedItems) {
