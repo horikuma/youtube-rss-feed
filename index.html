@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>お気に入りYouTube新着一覧</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 800px;
+            margin: auto;
+        }
+
+        .entry {
+            margin: 1.5em 0;
+            padding-bottom: 1em;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .thumb {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .meta {
+            font-size: 0.9em;
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>お気に入りYouTube新着一覧</h1>
+    <div id="feed">読み込み中...</div>
+
+    <script>
+        fetch('custom_youtube_feed.xml')
+            .then(response => response.text())
+            .then(xmlText => {
+                const parser = new DOMParser();
+                const xml = parser.parseFromString(xmlText, "application/xml");
+                const items = xml.querySelectorAll("item");
+
+                const container = document.getElementById("feed");
+                container.innerHTML = "";
+
+                items.forEach(item => {
+                    const title = item.querySelector("title")?.textContent || "（タイトルなし）";
+                    const link = item.querySelector("link")?.textContent || "#";
+                    const pubDate = item.querySelector("pubDate")?.textContent || "";
+                    const descRaw = item.querySelector("description")?.textContent || "";
+                    const desc = new DOMParser().parseFromString(descRaw, "text/html").body;
+
+                    const div = document.createElement("div");
+                    div.className = "entry";
+                    div.innerHTML = `
+            <a href="${link}" target="_blank"><h2>${title}</h2></a>
+            <div class="meta">${new Date(pubDate).toLocaleString()}</div>
+            <div>${desc.innerHTML}</div>
+          `;
+                    container.appendChild(div);
+                });
+            })
+            .catch(err => {
+                document.getElementById("feed").textContent = "フィードの読み込みに失敗しました。";
+                console.error("読み込みエラー:", err);
+            });
+    </script>
+</body>
+
+</html>
