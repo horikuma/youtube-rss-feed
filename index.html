@@ -68,15 +68,16 @@
                 const sortedItems = items
                     .map(item => {
                         const pubDate = parseItemDate(item.querySelector("pubDate")?.textContent || "");
-                        return { item, pubDate };
+                        const linkEl = item.querySelector("link[href]") || item.querySelector("link");
+                        const link = linkEl?.getAttribute("href") || linkEl?.textContent || "";
+                        return { item, pubDate, link };
                     })
                     .filter(entry => entry.pubDate >= startOfWeek && entry.link && !entry.link.includes("/shorts/"))
                     .sort((a, b) => b.pubDate - a.pubDate); // 新しい順
 
                 for (const { item, pubDate } of sortedItems) {
                     const title = item.querySelector("title")?.textContent || "（タイトルなし）";
-                    const linkEl = item.querySelector("link[href]") || item.querySelector("link");
-                    const link = linkEl?.getAttribute("href") || linkEl?.textContent || "";
+                    const link = item.querySelector("link")?.textContent || "#";
                     const descRaw = item.querySelector("description")?.textContent || "";
                     const desc = new DOMParser().parseFromString(descRaw, "text/html").body;
 
