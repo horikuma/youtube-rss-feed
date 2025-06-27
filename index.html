@@ -26,12 +26,25 @@
             font-size: 0.9em;
             color: #666;
         }
+
+        h2 {
+            font-size: 1.4em;
+            margin-top: 2em;
+        }
     </style>
 </head>
 
 <body>
     <h1>お気に入りYouTube新着一覧</h1>
-    <div id="feed">読み込み中...</div>
+
+    <h2>📅 今日</h2>
+    <div id="today"></div>
+
+    <h2>📅 昨日</h2>
+    <div id="yesterday"></div>
+
+    <h2>📅 今週（過去7日間）</h2>
+    <div id="thisweek"></div>
 
     <script>
         fetch('custom_youtube_feed.xml')
@@ -39,30 +52,52 @@
             .then(xmlText => {
                 const parser = new DOMParser();
                 const xml = parser.parseFromString(xmlText, "application/xml");
-                const items = xml.querySelectorAll("item");
+                const items = [...xml.querySelectorAll("item")];
 
-                const container = document.getElementById("feed");
-                container.innerHTML = "";
+                const todayDiv = document.getElementById("today");
+                const yesterdayDiv = document.getElementById("yesterday");
+                const weekDiv = document.getElementById("thisweek");
 
-                items.forEach(item => {
+                const now = new Date();
+                const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                const startOfYesterday = new Date(startOfToday.getTime() - 86400000); // 1日前
+                const startOfWeek = new Date(startOfToday.getTime() - 7 * 86400000); // 7日前
+
+                const parseItemDate = (pubDate) => new Date(pubDate);
+
+                const sortedItems = items
+                    .map(item => {
+                        const pubDate = parseItemDate(item.querySelector("pubDate")?.textContent || "");
+                        return { item, pubDate };
+                    })
+                    .filter(entry => entry.pubDate >= startOfWeek) // 8日以上前は除外
+                    .sort((a, b) => b.pubDate - a.pubDate); // 新しい順
+
+                for (const { item, pubDate } of sortedItems) {
                     const title = item.querySelector("title")?.textContent || "（タイトルなし）";
                     const link = item.querySelector("link")?.textContent || "#";
-                    const pubDate = item.querySelector("pubDate")?.textContent || "";
                     const descRaw = item.querySelector("description")?.textContent || "";
                     const desc = new DOMParser().parseFromString(descRaw, "text/html").body;
 
                     const div = document.createElement("div");
                     div.className = "entry";
                     div.innerHTML = `
-            <a href="${link}" target="_blank"><h2>${title}</h2></a>
-            <div class="meta">${new Date(pubDate).toLocaleString()}</div>
+            <a href="${link}" target="_blank"><h3>${title}</h3></a>
+            <div class="meta">${pubDate.toLocaleString()}</div>
             <div>${desc.innerHTML}</div>
           `;
-                    container.appendChild(div);
-                });
+
+                    if (pubDate >= startOfToday) {
+                        todayDiv.appendChild(div);
+                    } else if (pubDate >= startOfYesterday) {
+                        yesterdayDiv.appendChild(div);
+                    } else {
+                        weekDiv.appendChild(div);
+                    }
+                }
             })
             .catch(err => {
-                document.getElementById("feed").textContent = "フィードの読み込みに失敗しました。";
+                document.getElementById("today").textContent = "フィードの読み込みに失敗しました。";
                 console.error("読み込みエラー:", err);
             });
     </script>
