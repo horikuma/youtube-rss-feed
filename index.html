@@ -75,7 +75,8 @@
 
                 for (const { item, pubDate } of sortedItems) {
                     const title = item.querySelector("title")?.textContent || "（タイトルなし）";
-                    const link = item.querySelector("link")?.textContent || "#";
+                    const linkEl = item.querySelector("link[href]") || item.querySelector("link");
+                    const link = linkEl?.getAttribute("href") || linkEl?.textContent || "";
                     const descRaw = item.querySelector("description")?.textContent || "";
                     const desc = new DOMParser().parseFromString(descRaw, "text/html").body;
 
